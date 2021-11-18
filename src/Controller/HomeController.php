@@ -5,6 +5,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\DBAL\Connection;
 
 class HomeController extends AbstractController
 {
@@ -17,15 +18,12 @@ class HomeController extends AbstractController
     }
 
 	/**
-     * @Route("/odborky", name="odborky")
+     * @Route("/api/odborky", name="odborky")
      */
-    public function odborky(): Response
+    public function odborky(Connection $connection): Response
     {
-		$em = $this->getDoctrine()->getManager();
-        $sql = "SELECT * FROM program";
-        $stmt = $em->getConnection()->prepare($sql);
-        $stmt->execute();
-        $zaznamy = $stmt->fetchAll();
+		$sql = "SELECT * FROM program";
+        $zaznamy = $connection->fetchAllAssociative($sql);
 
 		$response = new Response();
 
