@@ -52,6 +52,78 @@ class HomeController extends AbstractController
     }
 
 	/**
+     * @Route("/api/login", methods={"POST"}, name="login")
+     */
+    public function login(Connection $connection, Request $request): Response
+    {
+		// the query string is '?foo=bar'
+
+		$username = $request->query->get('username');
+		$password = $request->query->get('password');
+
+		$request_content = strval($request->getContent());
+    	$params = json_decode($request_content, true);
+
+		$username = is_null($username) ? (array_key_exists("username", $params) ? $params["username"] : null) : $username;
+		$password = is_null($password) ? (array_key_exists("password", $params) ? $params["password"] : null) : $password;
+
+		$response = new Response();
+
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+
+
+		if(isset($username)
+		&& isset($password)){
+			try {
+
+				$resultSet = $connection->executeQuery('SELECT users.*, roles.role_name FROM users LEFT JOIN roles ON users.roles_role_id = roles.role_id WHERE username = ? AND password = ?', [
+					$username,
+					$password
+				]);
+
+				$user = $resultSet->fetchAssociative();
+
+			} catch (\Throwable $th) {
+				$response->setStatusCode(Response::HTTP_BAD_REQUEST);
+
+				$response->setContent(json_encode([
+					'msg' => 'DB select didnt work.',
+					'error' => $th->getMessage()
+				]));
+
+				return $response;
+			}
+
+			if(!isset($user) || is_null($user)){
+				$response->setStatusCode(Response::HTTP_NOT_FOUND);
+				$response->setContent(json_encode([
+					'msg' => 'Login was not succesful'
+				]));
+
+				return $response;
+			}
+
+			$response->setContent(json_encode([
+				'user_id' => $user['user_id'],
+				'age' => $user['age'],
+				'datum_registracie' => $user['datum_registracie'],
+			]));
+
+			$response->setStatusCode(Response::HTTP_OK);
+			return $response;
+		}
+
+		$response->setStatusCode(Response::HTTP_BAD_REQUEST);
+
+        $response->setContent(json_encode([
+			'msg' => 'Wrong request'
+		]));
+
+        return $response;
+    }
+
+	/**
      * @Route("/api/register", methods={"POST"}, name="register")
      */
     public function register(Connection $connection, Request $request): Response
