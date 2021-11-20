@@ -81,7 +81,7 @@ class HomeController extends AbstractController
 		&& isset($password)){
 			try {
 
-				$resultSet = $connection->executeQuery('SELECT users.* FROM new_users WHERE username = ? AND password = ?', [
+				$resultSet = $connection->executeQuery('SELECT new_users.* FROM new_users WHERE username = ? AND password = ?', [
 					$username,
 					$password
 				]);
@@ -109,9 +109,9 @@ class HomeController extends AbstractController
 			}
 
 			$response->setContent(json_encode([
-				'user_id' => $user['user_id'],
+				'id' => $user['id'],
 				'age' => $user['age'],
-				'datum_registracie' => $user['datum_registracie'],
+				'registrated_at' => $user['registrated_at'],
 			]));
 
 			$response->setStatusCode(Response::HTTP_OK);
@@ -136,8 +136,8 @@ class HomeController extends AbstractController
 
 		$username = $request->query->get('username');
 		$password = $request->query->get('password');
-		$firstname = $request->query->get('password');
-		$lastname = $request->query->get('password');
+		$firstname = $request->query->get('firstname');
+		$lastname = $request->query->get('lastname');
 		$age = $request->query->get('age');
 
 		$request_content = strval($request->getContent());
@@ -166,12 +166,13 @@ class HomeController extends AbstractController
 
 				$age_obj = $resultSet->fetchAssociative();
 
-				$count = $connection->executeStatement('INSERT INTO new_users (username, password, age, firstname, lastname) VALUES (?, ?, ?, ?, ?)', [
+				$count = $connection->executeStatement('INSERT INTO new_users (username, firstname, lastname, password, age_category_id, age) VALUES (?, ?, ?, ?, ?, ?)', [
 					$username,
+					$firstname,
+					$lastname,
 					$password,
 					intval($age_obj['id']),
-					$firstname,
-					$lastname
+					$age
 				]);
 
 				$created_id = $connection->lastInsertId();
