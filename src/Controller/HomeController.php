@@ -99,8 +99,9 @@ class HomeController extends AbstractController
 				return $response;
 			}
 
-			if(!isset($user) || is_null($user)){
+			if($user == false){
 				$response->setStatusCode(Response::HTTP_NOT_FOUND);
+
 				$response->setContent(json_encode([
 					'msg' => 'Login was not succesful'
 				]));
@@ -111,6 +112,10 @@ class HomeController extends AbstractController
 			$response->setContent(json_encode([
 				'id' => $user['id'],
 				'age' => $user['age'],
+				'age_category_id' => $user['age_category_id'],
+				'firstname' => $user['firstname'],
+				'lastname' => $user['lastname'],
+				'username' => $user['username'],
 				'registrated_at' => $user['registrated_at'],
 			]));
 
