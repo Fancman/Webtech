@@ -19,36 +19,40 @@ class HomeController extends AbstractController
     }
 
 	/**
-     * @Route("/api/odborky", name="odborky")
+     * @Route("/api/activities", name="activities")
      */
-    public function odborky(Connection $connection): Response
+    public function activities(Connection $connection, Request $request): Response
     {
-		$sql = "SELECT p.program_id,
-		p.program_name,
-		p.program_photo,
-		p.program_info,
-		p.program_pozn,
-		vk.vekova_kat_name,
-		s.stupen_name
-		FROM `program` p
-		LEFT JOIN program_kat pk ON p.program_kat_id=pk.program_kat_id
-		LEFT JOIN vekova_kat vk ON p.vekova_kat_id=vk.vekova_kat_id
-		LEFT JOIN stupen s ON p.stupen_id=s.stupen_id
-		AND pk.program_kat_name = 'Odborky'";
-        $zaznamy = $connection->fetchAllAssociative($sql);
+		$request_content = strval($request->getContent());
+    	$params = json_decode($request_content, true);
+		$age_category_id = $request->query->get('age_category_id');
 
 		$response = new Response();
 
         $response->headers->set('Content-Type', 'application/json');
         $response->headers->set('Access-Control-Allow-Origin', '*');
 
+		if($params)
+			$age_category_id = is_null($age_category_id) ? (array_key_exists("age_category_id", $params) ? $params["age_category_id"] : null) : $age_category_id;
+
+		if($age_category_id){
+			$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id WHERE na.age_category_id = ?', [
+				$age_category_id
+			]);
+
+			$zaznamy = $resultSet->fetchAllAssociative();
+
+			$response->setContent(json_encode($zaznamy));
+
+        	return $response;
+		}
+
+		$sql = "SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id";
+        $zaznamy = $connection->fetchAllAssociative($sql);
+
         $response->setContent(json_encode($zaznamy));
 
         return $response;
-
-        return $this->render('odborky.html.twig', [
-			'zaznamy' => $zaznamy
-		]);
     }
 
 	/**
@@ -156,10 +160,16 @@ class HomeController extends AbstractController
 		&& isset($age)){
 			try {
 
+				$resultSet = $connection->executeQuery('SELECT * FROM `new_age_category` WHERE ? BETWEEN min_age AND max_age', [
+					$age
+				]);
+
+				$age_obj = $resultSet->fetchAssociative();
+
 				$count = $connection->executeStatement('INSERT INTO new_users (username, password, age, firstname, lastname) VALUES (?, ?, ?, ?, ?)', [
 					$username,
 					$password,
-					$age,
+					intval($age_obj['id']),
 					$firstname,
 					$lastname
 				]);
@@ -170,7 +180,8 @@ class HomeController extends AbstractController
 				$response->setStatusCode(Response::HTTP_BAD_REQUEST);
 
 				$response->setContent(json_encode([
-					'msg' => 'Could not be inserted into DB.'
+					'msg' => 'Could not be inserted into DB.',
+					'error' => $th->getMessage()
 				]));
 
 				return $response;
