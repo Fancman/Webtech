@@ -77,7 +77,7 @@ class HomeController extends AbstractController
 		&& isset($password)){
 			try {
 
-				$resultSet = $connection->executeQuery('SELECT users.*, roles.role_name FROM users LEFT JOIN roles ON users.roles_role_id = roles.role_id WHERE username = ? AND password = ?', [
+				$resultSet = $connection->executeQuery('SELECT users.* FROM new_users WHERE username = ? AND password = ?', [
 					$username,
 					$password
 				]);
@@ -132,6 +132,8 @@ class HomeController extends AbstractController
 
 		$username = $request->query->get('username');
 		$password = $request->query->get('password');
+		$firstname = $request->query->get('password');
+		$lastname = $request->query->get('password');
 		$age = $request->query->get('age');
 
 		$request_content = strval($request->getContent());
@@ -139,6 +141,8 @@ class HomeController extends AbstractController
 
 		$username = is_null($username) ? (array_key_exists("username", $params) ? $params["username"] : null) : $username;
 		$password = is_null($password) ? (array_key_exists("password", $params) ? $params["password"] : null) : $password;
+		$firstname = is_null($firstname) ? (array_key_exists("firstname", $params) ? $params["firstname"] : null) : $firstname;
+		$lastname = is_null($lastname) ? (array_key_exists("lastname", $params) ? $params["lastname"] : null) : $lastname;
 		$age = is_null($age) ? (array_key_exists("age", $params) ? $params["age"] : null) : $age;
 
 		$response = new Response();
@@ -152,10 +156,12 @@ class HomeController extends AbstractController
 		&& isset($age)){
 			try {
 
-				$count = $connection->executeStatement('INSERT INTO users (username, password, age) VALUES (?, ?, ?)', [
+				$count = $connection->executeStatement('INSERT INTO new_users (username, password, age, firstname, lastname) VALUES (?, ?, ?, ?, ?)', [
 					$username,
 					$password,
-					$age
+					$age,
+					$firstname,
+					$lastname
 				]);
 
 				$created_id = $connection->lastInsertId();
