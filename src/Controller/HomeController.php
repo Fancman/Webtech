@@ -105,7 +105,9 @@ class HomeController extends AbstractController
     {
 		$request_content = strval($request->getContent());
     	$params = json_decode($request_content, true);
+
 		$age_category_id = $request->query->get('age_category_id');
+		$activity_type = $request->query->get('activity_type');
 
 		$response = new Response();
 
@@ -115,10 +117,30 @@ class HomeController extends AbstractController
 		if($params)
 			$age_category_id = is_null($age_category_id) ? (array_key_exists("age_category_id", $params) ? $params["age_category_id"] : null) : $age_category_id;
 
-		if($age_category_id){
-			$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id WHERE na.age_category_id = ?', [
-				$age_category_id
-			]);
+		if($params)
+			$activity_type = is_null($activity_type) ? (array_key_exists("activity_type", $params) ? $params["activity_type"] : null) : $activity_type;
+
+		if($age_category_id || $activity_type){
+			if($age_category_id && $activity_type){
+				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
+				WHERE 1=1 AND na.age_category_id = ? AND na.activity_type = ?', [
+					$age_category_id,
+					$activity_type
+				]);
+			}else if($age_category){
+				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
+				WHERE 1=1 AND na.age_category_id = ?', [
+					$age_category_id
+				]);
+			}else if($activity_type){
+				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
+				WHERE 1=1 AND na.activity_type = ?', [
+					$activity_type
+				]);
+			}
 
 			$zaznamy = $resultSet->fetchAllAssociative();
 
