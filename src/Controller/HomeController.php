@@ -128,7 +128,7 @@ class HomeController extends AbstractController
 					$age_category_id,
 					$activity_type
 				]);
-			}else if($age_category){
+			}else if($age_category_id){
 				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
 				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
 				WHERE 1=1 AND na.age_category_id = ?', [
