@@ -19,6 +19,26 @@ class HomeController extends AbstractController
     }
 
 	/**
+     * @Route("/api/age_categories", name="age_categories")
+     */
+    public function age_categories(Connection $connection, Request $request): Response
+    {
+		$response = new Response();
+
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+
+		$resultSet = $connection->executeQuery('SELECT * from new_age_category');
+
+		$zaznamy = $resultSet->fetchAllAssociative();
+
+		$response->setContent(json_encode($zaznamy));
+
+        return $response;
+
+	}
+
+	/**
      * @Route("/api/progress", name="progress")
      */
     public function progress(Connection $connection, Request $request): Response
