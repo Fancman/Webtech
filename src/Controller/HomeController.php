@@ -62,10 +62,14 @@ class HomeController extends AbstractController
 		if(isset($user_id)
 		&& isset($task_id)){
 			try {
-				$count = $connection->executeStatement('INSERT INTO new_task_progress (user_id, task_id) VALUES (?, ?)', [
-					$user_id,
-					$task_id
-				]);
+				$stmt = $connection->prepare('INSERT INTO new_task_progress (user_id, task_id) VALUES (:user_id, :task_id)');
+        		$stmt->execute(
+					[
+						'user_id' => $user_id,
+						'task_id' => $task_id
+					]
+				);
+
 
 				$created_id = $connection->lastInsertId();
 
