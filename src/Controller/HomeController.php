@@ -84,8 +84,15 @@ class HomeController extends AbstractController
 				return $response;
 			}
 
+			$resultSet = $connection->executeQuery('SELECT * FROM new_task WHERE id = ?', [
+				$task_id
+			]);
+
+			$task_record = $resultSet->fetchAllAssociative();
+
 			$response->setContent(json_encode([
-				'id' => $created_id
+				'new_record_id' => $created_id,
+				'activity_id' => ($task_record ? $task_record[0]['activity_id'] : null)
 			]));
 
 			$response->setStatusCode(Response::HTTP_OK);
