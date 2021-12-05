@@ -48,6 +48,7 @@ class HomeController extends AbstractController
 
 		$user_id = $request->query->get('user_id');
 		$task_id = $request->query->get('task_id');
+		$task_state = $request->query->get('task_state');
 
 		$response = new Response();
 
@@ -57,16 +58,28 @@ class HomeController extends AbstractController
 		if($params){
 			$user_id = is_null($user_id) ? (array_key_exists("user_id", $params) ? $params["user_id"] : null) : $user_id;
 			$task_id = is_null($task_id) ? (array_key_exists("task_id", $params) ? $params["task_id"] : null) : $task_id;
+			$task_state = is_null($task_state) ? (array_key_exists("task_state", $params) ? $params["task_state"] : null) : $task_state;
+
+			if(!in_array($task_state, ['rozpracovane', 'splnene', 'nesplnene'])){
+				$response->setStatusCode(Response::HTTP_BAD_REQUEST);
+
+				$response->setContent(json_encode([
+					'msg' => 'Task state musi byt z predvelenych hodnot: ' .  json_encode(['rozpracovane', 'splnene', 'nesplnene']),
+				]));
+
+				return $response;
+			}
 		}
 
 		if(isset($user_id)
-		&& isset($task_id)){
+		&& isset($task_id)
+		&& is_null($task_state)){
 			try {
 				$stmt = $connection->prepare("INSERT INTO new_task_progress (user_id, task_id, state) VALUES (:user_id, :task_id, 'rozpracovane')");
         		$stmt->execute(
 					[
 						'user_id' => $user_id,
-						'task_id' => $task_id
+						'task_id' => $task_id,
 					]
 				);
 
@@ -92,7 +105,51 @@ class HomeController extends AbstractController
 
 			$response->setContent(json_encode([
 				'new_record_id' => $created_id,
-				'activity_id' => ($task_record ? $task_record[0]['activity_id'] : null)
+				'activity_id' => ($task_record ? $task_record[0]['activity_id'] : null),
+				'task_id' => $task_id
+			]));
+
+			$response->setStatusCode(Response::HTTP_OK);
+
+			return $response;
+		}
+
+		if(isset($user_id)
+		&& isset($task_id)
+		&& isset($task_state)){
+			try {
+				$stmt = $connection->prepare("UPDATE new_task_progress SET state = :task_state WHERE user_id = :user_id AND task_id = :task_id");
+        		$execute = $stmt->execute(
+					[
+						'task_state' => $task_state,
+						'user_id' => $user_id,
+						'task_id' => $task_id,
+					]
+				);
+
+				$row_count = $execute->rowCount();
+
+			} catch (\Throwable $th) {
+				$response->setStatusCode(Response::HTTP_BAD_REQUEST);
+
+				$response->setContent(json_encode([
+					'msg' => 'Could not be update in DB.',
+					'error' => $th->getMessage()
+				]));
+
+				return $response;
+			}
+
+			$resultSet = $connection->executeQuery('SELECT * FROM new_task WHERE id = ?', [
+				$task_id
+			]);
+
+			$task_record = $resultSet->fetchAllAssociative();
+
+			$response->setContent(json_encode([
+				'activity_id' => ($task_record ? $task_record[0]['activity_id'] : null),
+				'task_id' => $task_id,
+				'affected_rows' => $row_count
 			]));
 
 			$response->setStatusCode(Response::HTTP_OK);
