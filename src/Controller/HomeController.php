@@ -317,6 +317,77 @@ class HomeController extends AbstractController
 	}
 
 	/**
+     * @Route("/api/remove-activity", name="remove-activity")
+     */
+    public function remove_activity(Connection $connection, Request $request): Response
+    {
+		$request_content = strval($request->getContent());
+    	$params = json_decode($request_content, true);
+
+		$user_id = $request->query->get('user_id');
+		$activity_id = $request->query->get('activity_id');
+
+		$response = new Response();
+
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+
+		if($params){
+			$user_id = is_null($user_id) ? (array_key_exists("user_id", $params) ? $params["user_id"] : null) : $user_id;
+			$activity_id = is_null($activity_id) ? (array_key_exists("activity_id", $params) ? $params["activity_id"] : null) : $activity_id;
+		}
+
+		$completed_activities = [];
+
+		if(isset($user_id) && isset($activity_id)){
+
+			$resultSet = $connection->executeQuery('SELECT * FROM new_task WHERE activity_id = ?', [
+				$activity_id
+			]);
+
+			$ulohy = $resultSet->fetchAllAssociative();
+
+			$row_counts = 0;
+
+			foreach ($ulohy as $u) {
+				try {
+					$stmt = $connection->prepare('DELETE FROM new_task_progress where user_id = ? AND task_id = ?');
+
+					$execute = $stmt->execute([
+						$user_id,
+						$u['id']
+					]);
+	
+					$row_count = $execute->rowCount();
+					$row_counts += $row_count;
+				} catch (\Throwable $th) {
+					$response->setStatusCode(Response::HTTP_BAD_REQUEST);
+
+					$response->setContent(json_encode([
+						'msg' => $th->getMessage()
+					]));
+
+					return $response;
+				}
+			}
+
+			$response->setContent(json_encode(['message' => 'Removed '.$row_counts.' tasks for activity.']));
+
+			$response->setStatusCode(Response::HTTP_OK);
+
+			return $response;
+		}
+
+		$response->setStatusCode(Response::HTTP_BAD_REQUEST);
+
+        $response->setContent(json_encode([
+			'msg' => 'Wrong request'
+		]));
+
+        return $response;
+	}
+
+	/**
      * @Route("/api/completed", name="completed")
      */
     public function completed(Connection $connection, Request $request): Response
