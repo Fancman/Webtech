@@ -292,7 +292,7 @@ class HomeController extends AbstractController
 						$u['id'],
 						'rozpracovane'
 					]);
-	
+
 					$row_count = $execute->rowCount();
 					$row_counts += $row_count;
 				} catch (\Throwable $th) {
@@ -475,7 +475,7 @@ class HomeController extends AbstractController
 				echo "<br>";*/
 
 				if(count($result) == 0){
-					$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+					$resultSet = $connection->executeQuery('SELECT na.*, nac.id as age_category_id, nac.name as age_category
 					FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
 					WHERE 1=1 AND na.id = ?', [
 							$activity_id
