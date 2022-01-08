@@ -535,20 +535,20 @@ class HomeController extends AbstractController
 
 		if($age_category_id || $activity_type){
 			if($age_category_id && $activity_type){
-				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+				$resultSet = $connection->executeQuery('SELECT na.*, nac.id as age_category_id, nac.name as age_category
 				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
 				WHERE 1=1 AND na.age_category_id = ? AND na.activity_type = ?', [
 					$age_category_id,
 					$activity_type
 				]);
 			}else if($age_category_id){
-				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+				$resultSet = $connection->executeQuery('SELECT na.*, nac.id as age_category_id, nac.name as age_category
 				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
 				WHERE 1=1 AND na.age_category_id = ?', [
 					$age_category_id
 				]);
 			}else if($activity_type){
-				$resultSet = $connection->executeQuery('SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category
+				$resultSet = $connection->executeQuery('SELECT na.*, nac.id as age_category_id, nac.name as age_category
 				FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id
 				WHERE 1=1 AND na.activity_type = ?', [
 					$activity_type
@@ -570,7 +570,7 @@ class HomeController extends AbstractController
         	return $response;
 		}
 
-		$sql = "SELECT na.id, na.name, na.img_url, na.level, na.activity_type, nac.id as age_category_id, nac.name as age_category FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id";
+		$sql = "SELECT na.*, nac.id as age_category_id, nac.name as age_category FROM new_activity na LEFT JOIN new_age_category nac ON na.age_category_id=nac.id";
         $zaznamy = $connection->fetchAllAssociative($sql);
 
 		foreach ($zaznamy as $idx => $z) {
